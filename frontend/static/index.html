@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Travel Concierge</title>
+<!-- Optional: used only to draw A2UI Icon components. If it can't load (offline/
+     corp network), icons fall back to showing their name as text. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined">
+<style>
+  :root {
+    --accent: #0284c7;
+    --accent-dark: #0369a1;
+    --bg: #f8fafc;
+    --border: #e2e8f0;
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text-main);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+  }
+  header {
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+    color: #fff;
+    padding: 1rem 1.5rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .brand { display: flex; align-items: center; gap: 0.75rem; }
+  .brand-title { font-weight: 700; font-size: 1.2rem; margin: 0; }
+  .brand-sub { font-size: 0.8rem; opacity: 0.85; font-weight: 400; margin-top: 0.1rem; }
+  .status-badge {
+    display: flex; align-items: center; gap: 0.4rem;
+    font-size: 0.75rem; background: rgba(255,255,255,0.15);
+    padding: 0.3rem 0.7rem; border-radius: 20px; font-weight: 500;
+  }
+  .dot { width: 8px; height: 8px; background: #4ade80; border-radius: 50%; display: inline-block; }
+
+  #log {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.5rem 1rem;
+    max-width: 820px;
+    width: 100%;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .msg-row {
+    display: flex;
+    gap: 0.75rem;
+    margin: 0.75rem 0;
+    animation: fadeIn 0.2s ease-out forwards;
+    align-items: flex-end;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .msg-row.user { flex-direction: row-reverse; }
+
+  .avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: #e2e8f0; display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem; flex-shrink: 0; box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+  .msg-row.user .avatar { background: #e0f2fe; color: var(--accent); }
+  .msg-row.agent .avatar { background: #0284c7; color: #fff; }
+
+  .bubble {
+    display: inline-block;
+    padding: 0.75rem 1.1rem;
+    border-radius: 18px 18px 18px 4px;
+    background: #ffffff;
+    border: 1px solid var(--border);
+    text-align: left;
+    max-width: 82%;
+    white-space: pre-wrap;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+  }
+  .msg-row.user .bubble {
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+    color: #ffffff;
+    border: none;
+    border-radius: 18px 18px 4px 18px;
+    box-shadow: 0 3px 10px rgba(2, 132, 199, 0.25);
+  }
+  /* When the reply is an A2UI card, drop the bubble chrome so the card stands alone. */
+  .bubble.rich { background: transparent; border: none; padding: 0; max-width: 100%; white-space: normal; box-shadow: none; }
+
+  .prompts-row {
+    display: flex; gap: 0.5rem; padding: 0.5rem 1rem 0;
+    max-width: 820px; width: 100%; margin: 0 auto; overflow-x: auto;
+  }
+  .prompt-chip {
+    background: #ffffff; border: 1px solid var(--border); color: #334155;
+    font-size: 0.85rem; padding: 0.45rem 0.9rem; border-radius: 20px;
+    cursor: pointer; white-space: nowrap; transition: all 0.15s ease; font-weight: 500;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+  }
+  .prompt-chip:hover {
+    border-color: var(--accent); color: var(--accent); background: #f0f9ff;
+    transform: translateY(-1px);
+  }
+
+  form {
+    display: flex; gap: 0.6rem; padding: 1.2rem;
+    border-top: 1px solid var(--border); background: #ffffff;
+    max-width: 820px; width: 100%; margin: 0 auto;
+  }
+  input {
+    flex: 1; padding: 0.75rem 1rem; border: 1px solid var(--border);
+    border-radius: 12px; font-size: 0.95rem; outline: none; transition: border-color 0.15s ease;
+  }
+  input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15); }
+  button {
+    padding: 0.75rem 1.3rem; border: none; border-radius: 12px;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+    color: #fff; font-weight: 600; cursor: pointer; transition: opacity 0.15s ease;
+  }
+  button:hover { opacity: 0.92; }
+
+  /* --- A2UI component styles (Card, Column, Row, Text, Divider, List, Image, Icon) --- */
+  .a2card {
+    border: 1px solid var(--border); border-radius: 16px; padding: 1.2rem;
+    background: #ffffff; box-shadow: 0 3px 12px rgba(0,0,0,0.05); max-width: 100%;
+  }
+  .a2card + .a2card, .a2col > .a2card { margin-top: 0.6rem; }
+  .a2col { display: flex; flex-direction: column; gap: 0.5rem; }
+  .a2row { display: flex; flex-direction: row; gap: 0.75rem; align-items: center; flex-wrap: wrap; }
+  .a2row.between { justify-content: space-between; }
+  .a2text { margin: 0; line-height: 1.45; }
+  .a2text.a2-h1 { font-size: 1.5rem; font-weight: 700; color: var(--text-main); }
+  .a2text.a2-h2 { font-size: 1.25rem; font-weight: 700; color: var(--text-main); }
+  .a2text.a2-h3 { font-size: 1.1rem; font-weight: 600; color: var(--text-main); }
+  .a2text.a2-h4 { font-size: 1rem; font-weight: 600; color: var(--text-main); }
+  .a2text.a2-caption { font-size: 0.85rem; color: var(--text-muted); }
+  .a2divider { border: none; border-top: 1px solid var(--border); margin: 0.5rem 0; width: 100%; }
+  .a2img { max-width: 100%; border-radius: 10px; display: block; }
+  .material-symbols-outlined { font-family: 'Material Symbols Outlined'; font-size: 1.25rem; line-height: 1; vertical-align: middle; color: var(--accent); }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <span style="font-size:1.5rem;">✈️</span>
+    <div>
+      <div class="brand-title">Travel Concierge</div>
+      <div class="brand-sub">AI Itinerary & Experience Planner</div>
+    </div>
+  </div>
+  <div class="status-badge"><span class="dot"></span> Concierge Online</div>
+</header>
+
+<div id="log"></div>
+
+<div class="prompts-row">
+  <button type="button" class="prompt-chip" onclick="sendPrompt('Plan a 3-day itinerary for Tokyo with seafood spots')">🗾 3-Day Tokyo Itinerary</button>
+  <button type="button" class="prompt-chip" onclick="sendPrompt('Find nearby cafes and top attractions in Paris')">🗼 Paris Attractions & Cafes</button>
+  <button type="button" class="prompt-chip" onclick="sendPrompt('Remember that I am allergic to peanuts and prefer budget hotels')">🥜 Allergy & Budget Prefs</button>
+</div>
+
+<form id="form">
+  <input id="input" placeholder="Plan a trip, ask about destinations..." autocomplete="off" autofocus>
+  <button>Send</button>
+</form>
+
+<script>
+const log = document.getElementById("log");
+const form = document.getElementById("form");
+const input = document.getElementById("input");
+
+function sendPrompt(txt) {
+  input.value = txt;
+  form.dispatchEvent(new Event("submit"));
+}
+
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text != null) e.textContent = text;
+  return e;
+}
+
+function bubble(who) {
+  const m = el("div", "msg-row " + who);
+  const avatar = el("div", "avatar", who === "user" ? "👤" : "🧳");
+  const b = el("div", "bubble");
+  m.appendChild(avatar);
+  m.appendChild(b);
+  log.appendChild(m);
+  log.scrollTop = log.scrollHeight;
+  return b;
+}
+
+/* ----------------------------------------------------------------------------
+ * A2UI mini-renderer (v0.8 Basic Catalog subset).
+ * Renders Card / Column / Row / Text / Divider / List / Image / Icon.
+ * Anything else falls back to plain text (see renderReply). All text goes in via
+ * textContent and image URLs are validated, so agent output can't inject HTML.
+ * -------------------------------------------------------------------------- */
+
+// A "bound value" is usually {literalString: "..."}; we only support literals.
+function boundStr(v) {
+  if (v == null) return "";
+  if (typeof v === "string") return v;
+  if (typeof v.literalString === "string") return v.literalString;
+  return "";
+}
+
+// child ids of a component's props: single `child` and/or `children.explicitList`.
+function childIds(props) {
+  const ids = [];
+  if (props && typeof props.child === "string") ids.push(props.child);
+  const ch = props && props.children;
+  if (ch && Array.isArray(ch.explicitList)) for (const c of ch.explicitList) if (typeof c === "string") ids.push(c);
+  return ids;
+}
+
+// A2UI icon names are camelCase (locationOn); Material Symbols wants snake_case.
+function iconName(n) { return String(n || "").replace(/([a-z0-9])([A-Z])/g, "$1_$2").replace(/\s+/g, "_").toLowerCase(); }
+
+function buildNode(id, comps, seen) {
+  if (!id || seen.has(id)) return null;   // missing / cycle guard
+  seen.add(id);
+  const spec = comps[id];
+  if (!spec || typeof spec !== "object") return null;
+  const type = Object.keys(spec)[0];
+  const props = spec[type] || {};
+  const kids = () => childIds(props).map(cid => buildNode(cid, comps, seen)).filter(Boolean);
+
+  switch (type) {
+    case "Card": {
+      const d = el("div", "a2card"); kids().forEach(n => d.appendChild(n)); return d;
+    }
+    case "Column":
+    case "List": {
+      const horizontal = type === "List" && props.direction === "horizontal";
+      const d = el("div", horizontal ? "a2row" : "a2col"); kids().forEach(n => d.appendChild(n)); return d;
+    }
+    case "Row": {
+      const d = el("div", "a2row" + (props.distribution === "spaceBetween" ? " between" : ""));
+      kids().forEach(n => d.appendChild(n)); return d;
+    }
+    case "Text": {
+      const t = el("div", "a2text");
+      const hint = String(props.usageHint || "body").toLowerCase();
+      if (["h1", "h2", "h3", "h4", "h5", "h6"].includes(hint)) t.classList.add("a2-" + hint);
+      else if (hint === "caption") t.classList.add("a2-caption");
+      t.textContent = boundStr(props.text);
+      return t;
+    }
+    case "Divider":
+      return el("hr", "a2divider");
+    case "Image": {
+      const src = boundStr(props.url || props.src);
+      if (!/^https?:\/\//i.test(src)) return null;   // only allow safe URLs
+      const img = el("img", "a2img"); img.src = src; img.alt = boundStr(props.alt) || ""; return img;
+    }
+    case "Icon": {
+      const s = el("span", "material-symbols-outlined"); s.textContent = iconName(boundStr(props.name) || props.name); return s;
+    }
+    default:
+      return null;   // unknown component -> skipped (text fallback covers content)
+  }
+}
+
+// Render one or more A2UI messages (beginRendering + surfaceUpdate) into `container`.
+// Returns true if anything was drawn.
+function renderSurface(messages, container) {
+  const comps = {};
+  const roots = [];
+  for (const m of messages) {
+    if (m.beginRendering && typeof m.beginRendering.root === "string") roots.push(m.beginRendering.root);
+    const su = m.surfaceUpdate;
+    if (su && Array.isArray(su.components)) for (const c of su.components) if (c && c.id && c.component) comps[c.id] = c.component;
+  }
+  let rootIds = roots.filter(r => comps[r]);
+  if (rootIds.length === 0) {   // no valid root given -> infer un-referenced components
+    const referenced = new Set();
+    for (const id in comps) { const spec = comps[id]; childIds(spec[Object.keys(spec)[0]] || {}).forEach(c => referenced.add(c)); }
+    rootIds = Object.keys(comps).filter(id => !referenced.has(id));
+  }
+  let drew = false;
+  for (const rid of rootIds) { const node = buildNode(rid, comps, new Set()); if (node) { container.appendChild(node); drew = true; } }
+  return drew;
+}
+
+// Fallback: pull every Text value out of the messages as plain text.
+function flattenText(messages) {
+  const out = [];
+  for (const m of messages) {
+    const su = m.surfaceUpdate;
+    if (su && Array.isArray(su.components)) for (const c of su.components) if (c && c.component && c.component.Text) out.push(boundStr(c.component.Text.text));
+  }
+  return out.join("\n").trim();
+}
+
+function renderReply(b, parts) {
+  b.textContent = "";   // clear the "…" placeholder
+  const texts = parts.filter(p => p && (p.kind === "text" || (!p.kind && p.text))).map(p => p.text || "");
+  const a2ui = parts.filter(p => p && p.kind === "a2ui" && p.data).map(p => p.data);
+
+  const textStr = texts.join("\n").trim();
+  if (textStr) b.appendChild(el("div", null, textStr));
+
+  if (a2ui.length) {
+    b.classList.add("rich");
+    if (!renderSurface(a2ui, b)) b.appendChild(el("div", null, flattenText(a2ui) || "(no card content)"));
+  }
+  if (!b.childNodes.length) b.textContent = "(no response)";
+  log.scrollTop = log.scrollHeight;
+}
+
+// The proxy returns { parts: [{kind:"text",text} | {kind:"a2ui",data}] }.
+form.addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  const text = input.value.trim();
+  if (!text) return;
+  bubble("user").textContent = text;
+  input.value = "";
+  const b = bubble("agent"); b.textContent = "…";
+  try {
+    const res = await fetch("/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: text }) });
+    const raw = await res.text();
+    let data;
+    try { data = JSON.parse(raw); }
+    catch { throw new Error(`Server returned non-JSON (HTTP ${res.status}). ${raw.slice(0, 300)}`); }
+    renderReply(b, data.parts || []);
+  } catch (e) {
+    b.textContent = "Error: " + e.message;
+  }
+});
+</script>
+</body>
+</html>
